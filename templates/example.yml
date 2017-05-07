@@ -1,0 +1,20 @@
+Resources:
+    ExampleTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+            AttributeDefinitions:
+                -
+                    AttributeName: ExKey
+                    AttributeType: S
+            KeySchema:
+                -
+                    AttributeName: ExKey
+                    KeyType: HASH
+    ExampleTableTTL:
+        Type: Custom::DynamoDBTTL
+        Properties:
+            ServiceToken: !ImportValue DynamoDBTTLProvider
+            TableName: !Ref ExampleTable
+            TimeToLiveSpecification:
+                Enabled: True
+                AttributeName: ExTimeStampAttribute

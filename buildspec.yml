@@ -1,0 +1,12 @@
+version: 0.1
+
+phases:
+    pre_build:
+        commands:
+            - "mkdir site-packages"
+            - "pip install --target=site-packages --ignore-installed -r requirements.txt"
+
+artifacts:
+    files:
+        - "sfn_providers/**/*"
+        - "site-packages/**/*"

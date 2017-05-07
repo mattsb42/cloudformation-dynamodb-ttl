@@ -1,0 +1,157 @@
+Description: CloudFormation custom resource provider for DynamoDB TTL
+Parameters:
+    LambdaFunctionBucket:
+        Type: String
+        Description: S3 Bucket containing Lambda Function package
+        Default: .ImportFromCodeBuild
+    LambdaFunctionKey:
+        Type: String
+        Description: S3 Key containing Lambda Function package
+        Default: .ImportFromCodeBuild
+    LambdaFunctionObjectVersion:
+        Type: String
+        Description: S3 Object Version of Key containing Lambda Function package
+        Default: .FindVersionAtStackCreation
+Conditions:
+    ImportBucketFromCodeBuild:
+        !Equals [!Ref LambdaFunctionBucket, .ImportFromCodeBuild]
+    ImportKeyFromCodeBuild:
+        !Equals [!Ref LambdaFunctionKey, .ImportFromCodeBuild]
+    UseRetrievedObjectVersion:
+        !Equals [!Ref LambdaFunctionObjectVersion, .FindVersionAtStackCreation]
+Resources:
+    S3ObjectInfoFunctionRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                    -
+                        Effect: Allow
+                        Principal:
+                            Service: lambda.amazonaws.com
+                        Action: sts:AssumeRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+            Policies:
+                -
+                    PolicyName: S3ObjectInfoReaderPolicy
+                    PolicyDocument:
+                        Version: 2012-10-17
+                        Statement:
+                            -
+                                Effect: Allow
+                                Action:
+                                    - s3:ListBucket
+                                    - s3:ListBucketVersions
+                                Resource: !Sub
+                                    - arn:aws:s3:::${BucketName}
+                                    - {"BucketName": !If [
+                                        ImportBucketFromCodeBuild,
+                                        !ImportValue DynamoDBTTLSourceCodeBucket,
+                                        !Ref LambdaFunctionBucket
+                                    ]}
+                            -
+                                Effect: Allow
+                                Action: s3:ListObjectVersions
+                                Resource: !Sub
+                                    - arn:aws:s3:::${BucketName}/*
+                                    - {"BucketName": !If [
+                                        ImportBucketFromCodeBuild,
+                                        !ImportValue DynamoDBTTLSourceCodeBucket,
+                                        !Ref LambdaFunctionBucket
+                                    ]}
+    S3ObjectInfoFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            Description: Retrieves most recent VersionId of specified Key
+            Handler: index.lambda_handler
+            Role: !GetAtt S3ObjectInfoFunctionRole.Arn
+            MemorySize: 128
+            Timeout: 3
+            Runtime: python2.7
+            Code:
+                ZipFile: |
+                    import json
+                    import logging
+                    import boto3
+                    import cfnresponse
+                    logger = logging.getLogger(__name__)
+                    logger.setLevel(logging.INFO)
+                    def lambda_handler(event, context):
+                        logger.info(json.dumps(event))
+                        if event['RequestType'] not in ('Create', 'Update'):
+                            return cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, None)
+                        try:
+                            s3 = boto3.client('s3')
+                            bucket = event['ResourceProperties']['Bucket']
+                            key = event['ResourceProperties']['Key']
+                            response = s3.list_object_versions(Bucket=bucket, Prefix=key, MaxKeys=1)
+                            version_id = response['Versions'][0]['VersionId']
+                            if response['Versions'][0]['Key'] != key:
+                                raise Exception('Object Version returned is for wrong Key')
+                        except Exception:
+                            logger.exception('Unexpected error encountered')
+                            return cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+                        data = {'Bucket': bucket, 'Key': key, 'VersionId': version_id}
+                        return cfnresponse.send(event, context, cfnresponse.SUCCESS, data, None)
+    LambdaFunctionValues:
+        Type: Custom::S3ObjectInfo
+        Properties:
+            ServiceToken: !GetAtt S3ObjectInfoFunction.Arn
+            Bucket: !If [
+                ImportBucketFromCodeBuild,
+                !ImportValue DynamoDBTTLSourceCodeBucket,
+                !Ref LambdaFunctionBucket
+            ]
+            Key: !If [
+                ImportKeyFromCodeBuild,
+                !ImportValue DynamoDBTTLBuildArtifactKey,
+                !Ref LambdaFunctionKey
+            ]
+    ProviderRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                    -
+                        Effect: Allow
+                        Principal:
+                            Service: lambda.amazonaws.com
+                        Action: sts:AssumeRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+            Policies:
+                -
+                    PolicyName: DynamoDBTTLAdmin
+                    PolicyDocument:
+                        Version: 2012-10-17
+                        Statement:
+                            -
+                                Effect: Allow
+                                Action: dynamodb:UpdateTimeToLive
+                                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+    ProviderFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            Description: CloudFormation custom resource provider for DynamoDB TTL
+            Code:
+                S3Bucket: !GetAtt LambdaFunctionValues.Bucket
+                S3Key:  !GetAtt LambdaFunctionValues.Key
+                S3ObjectVersion: !If [
+                    UserRetrievedObjectVersion,
+                    !GetAtt LambdaFunctionValues.VersionId,
+                    !Ref LambdaFunctionObjectVersion
+                ]
+            Handler: ddb_ttl_provider.lambda_handler
+            Role: !GetAtt ProviderRole.Arn
+            MemorySize: 128
+            Timeout: 3
+            Runtime: python2.7
+Outputs:
+    DynamoDBTTLProviderArn:
+        Description: Arn of DynamoDB TTL provider Lambda
+        Value: !GetAtt ProviderFunction.Arn
+        Export:
+            Name: DynamoDBTTLProvider
