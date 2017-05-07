@@ -25,8 +25,8 @@ The provided CloudFormation template exports the Arn of the Lambda provider:
 
 The provider accepts inputs exactly as expected in the `UpdateTimeToLive`_ API call.
 
-.. include:: templates/example.yml
-    :code: python
+.. literalinclude:: templates/example.yml
+    :code: yaml
 
 
 .. _UpdateTimeToLive: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTimeToLive.html
