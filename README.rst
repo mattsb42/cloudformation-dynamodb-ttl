@@ -26,6 +26,7 @@ The provided CloudFormation template exports the Arn of the Lambda provider:
 The provider accepts inputs exactly as expected in the `UpdateTimeToLive`_ API call.
 
 .. code-block:: yaml
+
     Resources:
     ExampleTable:
         Type: AWS::DynamoDB::Table
