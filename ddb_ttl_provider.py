@@ -70,6 +70,6 @@ def lambda_handler(event, context):
             context=context,
             response_status=cfnresponse.SUCCESS,
             reason=None,
-            reaponse_data={'AttributeName': event['ResourceProperties']['TimeToLiveSpecification']['AttributeName']},
+            response_data={'AttributeName': event['ResourceProperties']['TimeToLiveSpecification']['AttributeName']},
             physical_resource_id=event.get('PhysicalResourceId', None)
         )
