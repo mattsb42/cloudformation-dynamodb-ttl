@@ -30,6 +30,12 @@ def _setup():
     _is_setup = True
 
 
+_str_to_bool = {
+    'true': True,
+    'false': False
+}
+
+
 def _set_ttl(event):
     """Makes DynamoDB update TTL call based on event.
 
@@ -38,7 +44,7 @@ def _set_ttl(event):
     ddb.update_time_to_live(
         TableName=event['ResourceProperties']['TableName'],
         TimeToLiveSpecification=dict(
-            Enabled=event['ResourceProperties']['TimeToLiveSpecification']['Enabled'],
+            Enabled=_str_to_bool[event['ResourceProperties']['TimeToLiveSpecification']['Enabled']],
             AttributeName=event['ResourceProperties']['TimeToLiveSpecification']['AttributeName']
         )
     )
