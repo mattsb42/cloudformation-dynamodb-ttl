@@ -12,9 +12,11 @@ Deployment
 1. Create versioned S3 Bucket.
 2. Deploy ``codebuild.yml`` CloudFormation template.
 3. Execute a build of the generated CodeBuild project.
-    * The Name and Arn of the built project are exported as CloudFormation cross-stack values
+
+    * The Name and Arn of the built project are exported as CloudFormation cross-stack values.
         * **DynamoDBTTLBuildProjectName**
         * **DynamoDBTTLBuildProjectArn**
+
 4. Deploy ``providers.yml`` CloudFormation template.
 
 Usage
