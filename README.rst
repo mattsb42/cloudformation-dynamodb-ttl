@@ -28,25 +28,25 @@ The provider accepts inputs exactly as expected in the `UpdateTimeToLive`_ API c
 .. code-block:: yaml
 
     Resources:
-    ExampleTable:
-        Type: AWS::DynamoDB::Table
-        Properties:
-            AttributeDefinitions:
-                -
-                    AttributeName: ExKey
-                    AttributeType: S
-            KeySchema:
-                -
-                    AttributeName: ExKey
-                    KeyType: HASH
-    ExampleTableTTL:
-        Type: Custom::DynamoDBTTL
-        Properties:
-            ServiceToken: !ImportValue DynamoDBTTLProvider
-            TableName: !Ref ExampleTable
-            TimeToLiveSpecification:
-                Enabled: True
-                AttributeName: ExTimeStampAttribute
+        ExampleTable:
+            Type: AWS::DynamoDB::Table
+            Properties:
+                AttributeDefinitions:
+                    -
+                        AttributeName: ExKey
+                        AttributeType: S
+                KeySchema:
+                    -
+                        AttributeName: ExKey
+                        KeyType: HASH
+        ExampleTableTTL:
+            Type: Custom::DynamoDBTTL
+            Properties:
+                ServiceToken: !ImportValue DynamoDBTTLProvider
+                TableName: !Ref ExampleTable
+                TimeToLiveSpecification:
+                    Enabled: True
+                    AttributeName: ExTimeStampAttribute
 
 
 .. _UpdateTimeToLive: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTimeToLive.html
