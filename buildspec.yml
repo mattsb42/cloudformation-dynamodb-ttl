@@ -8,5 +8,5 @@ phases:
 
 artifacts:
     files:
-        - "sfn_providers/**/*"
+        - "ddb_ttl_provider.py"
         - "site-packages/**/*"

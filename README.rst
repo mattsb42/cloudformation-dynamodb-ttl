@@ -41,6 +41,9 @@ The provider accepts inputs exactly as expected in the `UpdateTimeToLive`_ API c
                     -
                         AttributeName: ExKey
                         KeyType: HASH
+                ProvisionedThroughput:
+                    ReadCapacityUnits: 1
+                    WriteCapacityUnits: 1
         ExampleTableTTL:
             Type: Custom::DynamoDBTTL
             Properties:

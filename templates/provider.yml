@@ -140,7 +140,7 @@ Resources:
                 S3Bucket: !GetAtt LambdaFunctionValues.Bucket
                 S3Key:  !GetAtt LambdaFunctionValues.Key
                 S3ObjectVersion: !If [
-                    UserRetrievedObjectVersion,
+                    UseRetrievedObjectVersion,
                     !GetAtt LambdaFunctionValues.VersionId,
                     !Ref LambdaFunctionObjectVersion
                 ]

@@ -10,6 +10,9 @@ Resources:
                 -
                     AttributeName: ExKey
                     KeyType: HASH
+            ProvisionedThroughput:
+                ReadCapacityUnits: 1
+                WriteCapacityUnits: 1
     ExampleTableTTL:
         Type: Custom::DynamoDBTTL
         Properties:
