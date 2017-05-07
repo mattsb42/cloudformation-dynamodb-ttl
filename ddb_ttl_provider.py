@@ -11,6 +11,8 @@ Properties format: {
 """
 import json
 import logging
+import sys
+sys.path.append('site-packages')
 
 import boto3
 import cfnresponse
